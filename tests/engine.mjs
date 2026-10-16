@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {backgroundColor,removeBackground} from '../engine.mjs';
+const w=9,h=9,source=new Uint8ClampedArray(w*h*4).fill(255);
+// A colored frame surrounds a white shirt. A detached red decoration must stay.
+for(let y=2;y<=6;y++)for(let x=2;x<=6;x++)if(x===2||x===6||y===2||y===6)source.set([0,80,180,255],(y*w+x)*4);
+source.set([240,60,20,255],(1*w+7)*4);
+assert.deepEqual(backgroundColor(source,w,h),[255,255,255]);
+const alpha=(result,x,y)=>result.data[(y*w+x)*4+3];
+const options={color:[255,255,255]};
+const a=removeBackground(source,w,h,options);
+assert.equal(alpha(a,0,0),0,'outside background is removed');
+assert.equal(alpha(a,4,4),255,'enclosed white shirt is preserved');
+assert.equal(alpha(a,7,1),255,'detached decoration is preserved');
+const b=removeBackground(source,w,h,{...options,seeds:[{x:4,y:4,color:[255,255,255]}]});
+assert.equal(alpha(b,4,4),0,'extra region click removes enclosed background');
+assert.equal(alpha(b,2,4),255,'extra region stops at colored border');
+const mask=new Uint8Array(w*h);mask[0]=1;mask[4*w+2]=2;
+const c=removeBackground(source,w,h,{...options,overrides:mask});
+assert.equal(alpha(c,0,0),255,'restore brush protects source');
+assert.equal(alpha(c,2,4),0,'erase brush removes any color');
+assert.equal(source[3],255,'source pixels stay unchanged');
+const transparent=new Uint8ClampedArray(4*4*4);
+assert.deepEqual(backgroundColor(transparent,4,4),[255,255,255]);
+assert.ok(removeBackground(transparent,4,4,options).data.every(v=>v===0));
+// A near-background edge gets partial alpha only when softness is enabled.
+const line=new Uint8ClampedArray([255,255,255,255,245,245,245,255,0,0,0,255]);
+const soft=removeBackground(line,3,1,{color:[255,255,255],tolerance:6,softness:10});
+assert.ok(soft.data[7]>0&&soft.data[7]<255);
+const hard=removeBackground(line,3,1,{color:[255,255,255],tolerance:6,softness:0});
+assert.equal(hard.data[7],255);
+console.log('PASS: border, detached objects, enclosed white, extra regions, restore/erase, source immutability, transparency, soft edges.');

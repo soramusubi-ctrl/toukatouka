@@ -16,7 +16,7 @@
 - `index.html`, `style.css`, `app.mjs`: UI・入力・編集・PNG保存
 - `worker.mjs`: UIを止めない処理用Worker
 - `engine.mjs`: 外周の代表色・連結領域・輪郭調整・復元/消去マスク
-- `sample.png`: ユーザー提供サンプル
+- `sample.webp`: ユーザー提供サンプル
 
 リポジトリ名: `toukatouka`。
 
